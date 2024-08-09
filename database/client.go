@@ -25,6 +25,8 @@ func MigrateModels() {
 		&models.User{},
 		&models.Session{},
 		&models.Shortlink{},
+		&models.ShortlinkAnalytics{},
+		&models.ShortlinkBrowserAnalytics{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database schema:", err)

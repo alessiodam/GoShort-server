@@ -2,6 +2,8 @@ package database
 
 import (
 	"GoShort/internal/models"
+	"errors"
+	"gorm.io/gorm"
 	"math/rand"
 	"time"
 )
@@ -51,5 +53,60 @@ func CreateShortlink(originalURL string, userID uint32) (models.Shortlink, error
 		return models.Shortlink{}, err
 	}
 
+	shortlinkAnalytics := models.ShortlinkAnalytics{
+		ShortlinkID: newShortlink.ID,
+		Clicks:      0,
+	}
+	if err := instance.Create(&shortlinkAnalytics).Error; err != nil {
+		return models.Shortlink{}, err
+	}
+
 	return newShortlink, nil
+}
+
+func GetShortlinkAnalyticsByShortlinkID(shortlinkID uint32) (*models.ShortlinkAnalytics, error) {
+	var shortlinkAnalytics models.ShortlinkAnalytics
+	if err := instance.Where("shortlink_id = ?", shortlinkID).First(&shortlinkAnalytics).Error; err != nil {
+		return nil, err
+	}
+	return &shortlinkAnalytics, nil
+}
+
+func RecordClickWithDetails(shortlinkID uint32, browser, country string) error {
+	var analytics models.ShortlinkAnalytics
+	instance.Where("shortlink_id = ?", shortlinkID).First(&analytics)
+	analytics.Clicks++
+	if err := instance.Save(&analytics).Error; err != nil {
+		return err
+	}
+
+	var browserAnalytics models.ShortlinkBrowserAnalytics
+	result := instance.Where("shortlink_id = ? AND browser = ? AND country = ?", shortlinkID, browser, country).First(&browserAnalytics)
+	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		browserAnalytics = models.ShortlinkBrowserAnalytics{
+			ShortlinkID: shortlinkID,
+			Browser:     browser,
+			Country:     country,
+			Count:       1,
+		}
+		if err := instance.Create(&browserAnalytics).Error; err != nil {
+			return err
+		}
+	} else {
+		browserAnalytics.Count++
+		if err := instance.Save(&browserAnalytics).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GetShortlinkBrowserAnalyticsByShortlinkID(shortlinkID uint32) ([]models.ShortlinkBrowserAnalytics, error) {
+	var analytics []models.ShortlinkBrowserAnalytics
+	err := instance.Where("shortlink_id = ?", shortlinkID).Find(&analytics).Error
+	if err != nil {
+		return nil, err
+	}
+	return analytics, nil
 }
