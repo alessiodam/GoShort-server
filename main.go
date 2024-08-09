@@ -42,10 +42,10 @@ var startCmd = &cobra.Command{
 		database.Connect()
 		goShortRouter := router.SetupRouter()
 
-		currentLogger.Info("GoShort! serving on [::1]:8000!")
+		currentLogger.Info("GoShort! serving on 0.0.0.0:8000!")
 		goShortHttpServer := &http.Server{
 			Handler:      goShortRouter,
-			Addr:         "[::1]:8000",
+			Addr:         "0.0.0.0:8000",
 			WriteTimeout: 10 * time.Second,
 			ReadTimeout:  10 * time.Second,
 		}

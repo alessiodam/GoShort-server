@@ -5,6 +5,7 @@ import (
 	"GoShort/internal/handlers/v1/serializers"
 	"GoShort/internal/handlers/v1/validators"
 	"GoShort/internal/models"
+	"GoShort/settings"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -68,7 +69,7 @@ func userRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var newUserSession = models.Session{
 		UserID:    user.ID,
 		Token:     uuid.New().String(),
-		ExpiresAt: time.Now().Add(24 * time.Hour),
+		ExpiresAt: time.Now().Add(time.Duration(settings.Settings.SessionValidityDays) * 24 * time.Hour),
 	}
 
 	err = database.CreateSession(&newUserSession)

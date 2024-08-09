@@ -18,6 +18,7 @@ var Settings struct {
 	Debug                bool
 	TimeZone             string
 	MaxShortlinksPerUser uint16
+	SessionValidityDays  int
 
 	CORS struct {
 		AllowedOrigins []string
@@ -43,13 +44,18 @@ func LoadSettings() {
 	Settings.BaseURL = os.Getenv("BASE_URL")
 	Settings.Debug = os.Getenv("DEBUG") == "true"
 	Settings.TimeZone = os.Getenv("TIMEZONE")
+	Settings.CORS.AllowedOrigins = strings.Split(os.Getenv("CORS_ALLOWED_ORIGINS"), ",")
 	maxShortLinksPerUserInt, err := strconv.Atoi(os.Getenv("MAX_SHORTLINKS_PER_USER"))
 	if err != nil {
 		settingsLogger.Error("Error loading MAX_SHORTLINKS_PER_USER")
 	}
 	Settings.MaxShortlinksPerUser = uint16(maxShortLinksPerUserInt)
 
-	Settings.CORS.AllowedOrigins = strings.Split(os.Getenv("CORS_ALLOWED_ORIGINS"), ",")
+	sessionValidityDaysInt, err := strconv.Atoi(os.Getenv("SESSION_VALIDITY_DAYS"))
+	if err != nil {
+		settingsLogger.Error("Error loading SESSION_VALIDITY_DAYS")
+	}
+	Settings.SessionValidityDays = sessionValidityDaysInt
 
 	Settings.Database.Name = os.Getenv("DB_NAME")
 	Settings.Database.User = os.Getenv("DB_USER")

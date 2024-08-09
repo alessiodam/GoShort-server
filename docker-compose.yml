@@ -1,3 +1,5 @@
+name: goshort
+
 services:
   goshort-db:
     image: postgres
@@ -9,8 +11,37 @@ services:
       POSTGRES_DB: ${DB_NAME}
     ports:
       - ${DB_PORT}:5432
+    networks:
+      - goshort-net
     volumes:
       - goshort_data:/var/lib/postgresql/data
 
+#  goshort:
+#    image: ghcr.io/tkbstudios/goshort-server:latest
+#    container_name: goshort
+#    depends_on:
+#      - goshort-db
+#    ports:
+#      - "8000:8000"
+#    networks:
+#      - goshort-net
+#    environment:
+#      BASE_URL: ${BASE_URL}
+#      DEBUG: ${DEBUG}
+#      TIMEZONE: ${TIMEZONE}
+#      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+#      NEEDS_REGISTRATION: ${NEEDS_REGISTRATION}
+#      MAX_SHORTLINKS_PER_USER: ${MAX_SHORTLINKS_PER_USER}
+#      SESSION_VALIDITY_DAYS: ${SESSION_VALIDITY_DAYS}
+#      DB_NAME: ${DB_NAME}
+#      DB_USER: ${DB_USER}
+#      DB_PASS: ${DB_PASS}
+#      DB_HOST: ${DB_HOST}
+#      DB_PORT: ${DB_PORT}
+
 volumes:
   goshort_data:
+
+networks:
+  goshort-net:
+    driver: bridge

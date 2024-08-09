@@ -23,8 +23,6 @@ WORKDIR /app
 COPY --from=builder /app/goshort-server .
 COPY --from=builder /app/entrypoint.sh .
 
-RUN apk add --no-cache bash
-
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
