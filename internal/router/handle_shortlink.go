@@ -116,6 +116,8 @@ func handleShortlink(w http.ResponseWriter, r *http.Request) {
 		IsHTTP:      isHTTP,
 	}
 
+	_ = database.IncrementShortlinkAnalyticsClicksByShortlinkID(redirectShortlink.ID)
+
 	w.Header().Set("Content-Type", "text/html")
 	err = t.Execute(w, data)
 	if err != nil {

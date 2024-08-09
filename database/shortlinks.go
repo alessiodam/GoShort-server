@@ -2,6 +2,7 @@ package database
 
 import (
 	"GoShort/internal/models"
+	"gorm.io/gorm"
 	"math/rand"
 	"time"
 )
@@ -51,5 +52,28 @@ func CreateShortlink(originalURL string, userID uint32) (models.Shortlink, error
 		return models.Shortlink{}, err
 	}
 
+	shortlinkAnalytics := models.ShortlinkAnalytics{
+		ShortlinkID: newShortlink.ID,
+		Clicks:      0,
+	}
+	if err := instance.Create(&shortlinkAnalytics).Error; err != nil {
+		return models.Shortlink{}, err
+	}
+
 	return newShortlink, nil
+}
+
+func GetShortlinkAnalyticsByShortlinkID(shortlinkID uint32) (*models.ShortlinkAnalytics, error) {
+	var shortlinkAnalytics models.ShortlinkAnalytics
+	if err := instance.Where("shortlink_id = ?", shortlinkID).First(&shortlinkAnalytics).Error; err != nil {
+		return nil, err
+	}
+	return &shortlinkAnalytics, nil
+}
+
+func IncrementShortlinkAnalyticsClicksByShortlinkID(shortlinkID uint32) error {
+	if err := instance.Model(&models.ShortlinkAnalytics{}).Where("shortlink_id = ?", shortlinkID).Update("clicks", gorm.Expr("clicks + 1")).Error; err != nil {
+		return err
+	}
+	return nil
 }

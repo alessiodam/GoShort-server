@@ -31,7 +31,7 @@ func listShortLinksHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":    true,
 		"message":    "Shortlinks retrieved successfully",
-		"shortlinks": shortlinks,
+		"shortlinks": serializedShortlinks,
 	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
