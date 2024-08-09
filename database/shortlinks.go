@@ -2,6 +2,7 @@ package database
 
 import (
 	"GoShort/internal/models"
+	"errors"
 	"gorm.io/gorm"
 	"math/rand"
 	"time"
@@ -71,9 +72,41 @@ func GetShortlinkAnalyticsByShortlinkID(shortlinkID uint32) (*models.ShortlinkAn
 	return &shortlinkAnalytics, nil
 }
 
-func IncrementShortlinkAnalyticsClicksByShortlinkID(shortlinkID uint32) error {
-	if err := instance.Model(&models.ShortlinkAnalytics{}).Where("shortlink_id = ?", shortlinkID).Update("clicks", gorm.Expr("clicks + 1")).Error; err != nil {
+func RecordClickWithDetails(shortlinkID uint32, browser, country string) error {
+	var analytics models.ShortlinkAnalytics
+	instance.Where("shortlink_id = ?", shortlinkID).First(&analytics)
+	analytics.Clicks++
+	if err := instance.Save(&analytics).Error; err != nil {
 		return err
 	}
+
+	var browserAnalytics models.ShortlinkBrowserAnalytics
+	result := instance.Where("shortlink_id = ? AND browser = ? AND country = ?", shortlinkID, browser, country).First(&browserAnalytics)
+	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		browserAnalytics = models.ShortlinkBrowserAnalytics{
+			ShortlinkID: shortlinkID,
+			Browser:     browser,
+			Country:     country,
+			Count:       1,
+		}
+		if err := instance.Create(&browserAnalytics).Error; err != nil {
+			return err
+		}
+	} else {
+		browserAnalytics.Count++
+		if err := instance.Save(&browserAnalytics).Error; err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func GetShortlinkBrowserAnalyticsByShortlinkID(shortlinkID uint32) ([]models.ShortlinkBrowserAnalytics, error) {
+	var analytics []models.ShortlinkBrowserAnalytics
+	err := instance.Where("shortlink_id = ?", shortlinkID).Find(&analytics).Error
+	if err != nil {
+		return nil, err
+	}
+	return analytics, nil
 }

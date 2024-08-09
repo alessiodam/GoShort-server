@@ -8,6 +8,23 @@ import (
 	"strings"
 )
 
+func getBrowserInfo(r *http.Request) string {
+	userAgent := r.Header.Get("User-Agent")
+	if strings.Contains(userAgent, "Chrome") {
+		return "Chrome"
+	} else if strings.Contains(userAgent, "Firefox") {
+		return "Firefox"
+	} else if strings.Contains(userAgent, "Safari") {
+		return "Safari"
+	}
+	return "Unknown"
+}
+
+func getCountryInfo(r *http.Request) string {
+	// TODO: integrate with a service later (preferably GeoIP2)
+	return "Unknown"
+}
+
 func handleShortlink(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	shortlink := vars["shortlink"]
@@ -19,6 +36,15 @@ func handleShortlink(w http.ResponseWriter, r *http.Request) {
 	redirectURL := redirectShortlink.LongURL + "?utm_source=goshort&utm_medium=redirect&utm_campaign=" + shortlink
 
 	isHTTP := strings.HasPrefix(redirectShortlink.LongURL, "http://")
+
+	browser := getBrowserInfo(r)
+	country := getCountryInfo(r)
+
+	err = database.RecordClickWithDetails(redirectShortlink.ID, browser, country)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
 	warningTemplate := `
 <!DOCTYPE html>
@@ -115,8 +141,6 @@ func handleShortlink(w http.ResponseWriter, r *http.Request) {
 		RedirectUrl: redirectURL,
 		IsHTTP:      isHTTP,
 	}
-
-	_ = database.IncrementShortlinkAnalyticsClicksByShortlinkID(redirectShortlink.ID)
 
 	w.Header().Set("Content-Type", "text/html")
 	err = t.Execute(w, data)
